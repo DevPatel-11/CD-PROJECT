@@ -1,0 +1,2 @@
+class GrammarParseError(Exception):
+    pass

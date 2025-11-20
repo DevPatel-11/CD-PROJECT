@@ -3,9 +3,9 @@ from .parser_core import Grammar
 
 
 # ----------------------------------------------------------------------
-# LR(0) / SLR helpers
+# LR(1) helpers
 # ----------------------------------------------------------------------
-def _closure_lr0(items: Set[Tuple[str, Tuple[str, ...], int]], grammar: Grammar):
+def _closure_lr1(items: Set[Tuple[str, Tuple[str, ...], int]], grammar: Grammar):
     closure = set(items)
     added = True
 
@@ -29,15 +29,17 @@ def _closure_lr0(items: Set[Tuple[str, Tuple[str, ...], int]], grammar: Grammar)
     return closure
 
 
-def _goto_lr0(items: Set[Tuple[str, Tuple[str, ...], int]], symbol: str, grammar: Grammar):
+def _goto_lr1(
+    items: Set[Tuple[str, Tuple[str, ...], int]], symbol: str, grammar: Grammar
+):
     shifted = set()
     for lhs, rhs, dot in items:
         if dot < len(rhs) and rhs[dot] == symbol:
             shifted.add((lhs, rhs, dot + 1))
-    return _closure_lr0(shifted, grammar) if shifted else set()
+    return _closure_lr1(shifted, grammar) if shifted else set()
 
 
-def _canonical_lr0_collection(grammar: Grammar):
+def _canonical_lr1_collection(grammar: Grammar):
     # Build an augmented grammar locally to detect accept state
     aug_start = grammar.start + "'"
     while aug_start in grammar.nonterminals or aug_start in grammar.terminals:
@@ -52,7 +54,7 @@ def _canonical_lr0_collection(grammar: Grammar):
     start_rhs = aug_grammar.productions[aug_grammar.start][0]
     start_item = (aug_grammar.start, tuple(start_rhs), 0)
 
-    c0 = _closure_lr0({start_item}, aug_grammar)
+    c0 = _closure_lr1({start_item}, aug_grammar)
 
     collection = [c0]
     state_map = {frozenset(c0): 0}
@@ -66,7 +68,7 @@ def _canonical_lr0_collection(grammar: Grammar):
                 symbols.add(rhs[dot])
 
         for X in symbols:
-            gotoI = _goto_lr0(I, X, aug_grammar)
+            gotoI = _goto_lr1(I, X, aug_grammar)
             if gotoI:
                 key = frozenset(gotoI)
                 if key not in state_map:
@@ -77,12 +79,12 @@ def _canonical_lr0_collection(grammar: Grammar):
     return collection, state_map, aug_grammar
 
 
-def build_slr(grammar, first_sets, follow_sets):
-    items, state_map, aug_grammar = _canonical_lr0_collection(grammar)
+def build_lr1(grammar, first_sets, follow_sets):
+    items, state_map, aug_grammar = _canonical_lr1_collection(grammar)
 
-    lr0_item_sets = []
+    lr1_item_sets = []
     for idx, item_set in enumerate(items):
-        lr0_item_sets.append(
+        lr1_item_sets.append(
             {
                 "id": idx,
                 "items": [
@@ -98,21 +100,21 @@ def build_slr(grammar, first_sets, follow_sets):
         )
 
     return {
-        "item_sets": lr0_item_sets,
+        "item_sets": lr1_item_sets,
         "states": items,
         "state_map": state_map,
         "grammar": aug_grammar,
     }
 
 
-def build_slr_action_goto_tables(lr0_result, grammar, follow_sets):
+def build_lr1_action_goto_tables(lr1_result, grammar, follow_sets):
     action = {}
     goto = {}
 
-    state_map = lr0_result["state_map"]
-    items = lr0_result["states"]
+    state_map = lr1_result["state_map"]
+    items = lr1_result["states"]
 
-    aug_grammar = lr0_result.get("grammar")
+    aug_grammar = lr1_result.get("grammar")
     aug_start = aug_grammar.start if aug_grammar is not None else None
 
     for s, item_set in enumerate(items):
@@ -127,7 +129,7 @@ def build_slr_action_goto_tables(lr0_result, grammar, follow_sets):
 
                 # SHIFT
                 if sym in grammar.terminals:
-                    next_items = _goto_lr0(item_set, sym, aug_grammar)
+                    next_items = _goto_lr1(item_set, sym, aug_grammar)
                     next_state = state_map.get(frozenset(next_items))
                     if next_state is not None:
                         entry = f"shift {next_state}"
@@ -141,7 +143,7 @@ def build_slr_action_goto_tables(lr0_result, grammar, follow_sets):
 
                 # GOTO
                 elif sym in grammar.nonterminals:
-                    next_items = _goto_lr0(item_set, sym, aug_grammar)
+                    next_items = _goto_lr1(item_set, sym, aug_grammar)
                     next_state = state_map.get(frozenset(next_items))
                     if next_state is not None:
                         goto[s_str][sym] = next_state
@@ -164,7 +166,6 @@ def build_slr_action_goto_tables(lr0_result, grammar, follow_sets):
                             action[s_str][a] = entry
 
     return action, goto
-
 
 
 # ----------------------------------------------------------------------
@@ -286,7 +287,9 @@ def simulate_parse(
             lhs = lhs.strip()
             rhs_symbols = rhs.strip().split()
 
-            pop_count = 0 if rhs_symbols == ["ε"] or rhs_symbols == [] else len(rhs_symbols)
+            pop_count = (
+                0 if rhs_symbols == ["ε"] or rhs_symbols == [] else len(rhs_symbols)
+            )
             for _ in range(2 * pop_count):
                 stack.pop()
 
@@ -301,8 +304,14 @@ def simulate_parse(
                 break
 
             stack.append(goto_state)
-            rhs_desc = "ε" if not rhs_symbols or rhs_symbols == ["ε"] else " ".join(rhs_symbols)
-            step_entry["notes"] = f"Reduce {lhs} -> {rhs_desc}; goto state {goto_state}."
+            rhs_desc = (
+                "ε"
+                if not rhs_symbols or rhs_symbols == ["ε"]
+                else " ".join(rhs_symbols)
+            )
+            step_entry["notes"] = (
+                f"Reduce {lhs} -> {rhs_desc}; goto state {goto_state}."
+            )
             continue
 
         errors.append(f"Unknown parser action '{action}'")
@@ -320,12 +329,12 @@ def simulate_parse(
     }
 
 
-
-
 # ----------------------------------------------------------------------
 # SIMULATE PARSING (for frontend/back-end interaction)
 # ----------------------------------------------------------------------
-def simulate_parse(grammar, input_tokens, action_table, goto_table, start_symbol, max_steps=1000):
+def simulate_parse(
+    grammar, input_tokens, action_table, goto_table, start_symbol, max_steps=1000
+):
     steps = []
     errors = []
 
@@ -399,7 +408,9 @@ def simulate_parse(grammar, input_tokens, action_table, goto_table, start_symbol
             stack.append(lhs)
             goto_state = goto_table.get(str(prev_state), {}).get(lhs)
             if goto_state is None:
-                errors.append(f"GOTO error: no entry for state {prev_state} and symbol {lhs}")
+                errors.append(
+                    f"GOTO error: no entry for state {prev_state} and symbol {lhs}"
+                )
                 return {"steps": steps, "final_status": "error", "errors": errors}
 
             stack.append(goto_state)

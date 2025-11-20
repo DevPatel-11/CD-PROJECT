@@ -14,8 +14,8 @@ from backend.lr1_builder import (
     detect_conflicts,
     resolve_conflicts_default_left,
     simulate_parse,
-    build_slr,
-    build_slr_action_goto_tables,
+    build_lr1,
+    build_lr1_action_goto_tables,
 )
 
 
@@ -56,7 +56,7 @@ def analyze_grammar():
         response = {
             "first_sets": first_sets,
             "follow_sets": follow_sets,
-            "slr_item_sets": [],
+            "lr1_item_sets": [],
             "action_table": {},
             "goto_table": {},
             "ambiguity": {"has_conflict": False, "conflicts": []},
@@ -64,12 +64,14 @@ def analyze_grammar():
             "errors": [],
         }
 
-        # SLR parsing tables
-        if getattr(req.options, "build_slr", False):
-            slr_result = build_slr(grammar, first_sets, follow_sets)
-            response["slr_item_sets"] = slr_result["item_sets"]
+        # LR(1) parsing tables
+        if getattr(req.options, "build_lr1", False):
+            lr1_result = build_lr1(grammar, first_sets, follow_sets)
+            response["lr1_item_sets"] = lr1_result["item_sets"]
 
-            action_table, goto_table = build_slr_action_goto_tables(slr_result, grammar, follow_sets)
+            action_table, goto_table = build_lr1_action_goto_tables(
+                lr1_result, grammar, follow_sets
+            )
             response["action_table"] = action_table
             response["goto_table"] = goto_table
 
@@ -78,13 +80,17 @@ def analyze_grammar():
             response["ambiguity"] = raw_conflicts
 
             # Resolve conflicts using default LEFT associativity
-            action_table, resolved_conflicts = resolve_conflicts_default_left(action_table)
+            action_table, resolved_conflicts = resolve_conflicts_default_left(
+                action_table
+            )
             response["action_table"] = action_table
             response["resolved_conflicts"] = resolved_conflicts
 
         # Ambiguity flag fix
         if req.options.detect_ambiguity and not response["ambiguity"]["has_conflict"]:
-            response["ambiguity"]["has_conflict"] = len(response["ambiguity"]["conflicts"]) > 0
+            response["ambiguity"]["has_conflict"] = (
+                len(response["ambiguity"]["conflicts"]) > 0
+            )
 
     except ValidationError as ve:
         return jsonify({"errors": [ve.errors()]}), 422
@@ -109,9 +115,11 @@ def simulate():
         first_sets = compute_first_sets(grammar)
         follow_sets = compute_follow_sets(grammar, first_sets)
 
-        # Build SLR tables for simulation (SLR only)
-        slr_result = build_slr(grammar, first_sets, follow_sets)
-        action_table, goto_table = build_slr_action_goto_tables(slr_result, grammar, follow_sets)
+        # Build LR tables for simulation (LR only)
+        lr1_result = build_lr1(grammar, first_sets, follow_sets)
+        action_table, goto_table = build_lr1_action_goto_tables(
+            lr1_result, grammar, follow_sets
+        )
 
         resp = simulate_parse(
             grammar,

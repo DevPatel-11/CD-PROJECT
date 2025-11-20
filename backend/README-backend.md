@@ -24,6 +24,7 @@
 - parser_core.py — Grammar parsing logic
 - first_follow.py — FIRST/FOLLOW set computations
 - lr1_builder.py — LR(1) automaton and table construction, parsing simulation
+ - lr1_builder.py automaton and table construction, parsing simulation
 - schemas.py — Pydantic models for request/response contracts
 - exceptions.py — Custom error types
 - tests/test_parser_core.py — Unit tests for grammar and parser logic

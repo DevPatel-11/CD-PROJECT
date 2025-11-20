@@ -33,8 +33,6 @@ function GrammarEditor({
   options,
   setOptions,
   onAnalyze,
-  onGenerateLR1,
-  onResolveAmbiguity,
   isAnalyzing,
 }) {
   const isDisabled = !grammarText.trim() || isAnalyzing;
@@ -83,76 +81,23 @@ function GrammarEditor({
               onChange={e => setStartSymbol(e.target.value)}
               fullWidth
             />
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Chip label="Pro tip: ⌘ / Ctrl + Enter runs Analyze" color="primary" variant="outlined" />
-            </Stack>
           </Stack>
-          <FormGroup row sx={{ flexWrap: "wrap" }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={options.detectAmbiguity}
-                  onChange={e => setOptions(x => ({ ...x, detectAmbiguity: e.target.checked }))}
-                />
-              }
-              label="Detect LR(1) conflicts"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={options.buildLR1}
-                  onChange={e => setOptions(x => ({ ...x, buildLR1: e.target.checked }))}
-                />
-              }
-              label="Build LR(1) tables"
-            />
-          </FormGroup>
         </Stack>
       </CardContent>
       <Divider />
-      <CardActions sx={{ justifyContent: "space-between", flexWrap: "wrap", gap: 1, p: 3 }}>
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ width: "100%" }}>
-          <Tooltip title="Run standard grammar analysis">
-            <span>
-              <Button
-                variant="contained"
-                startIcon={<PlayCircleOutlineIcon />}
-                onClick={onAnalyze}
-                disabled={isDisabled}
-                fullWidth
-              >
-                Analyze Grammar
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title="Force LR(1) tables generation">
-            <span>
-              <Button
-                variant="outlined"
-                startIcon={<AutoAwesomeIcon />}
-                onClick={onGenerateLR1}
-                disabled={isDisabled}
-                fullWidth
-              >
-                Generate LR(1)
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title="Highlight ambiguity conflicts">
-            <span>
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<AutoFixHighIcon />}
-                onClick={onResolveAmbiguity}
-                disabled={isDisabled}
-                fullWidth
-              >
-                Resolve Ambiguity
-              </Button>
-            </span>
-          </Tooltip>
-        </Stack>
+      <CardActions sx={{ justifyContent: "flex-start", p: 3 }}>
+        <Tooltip title="Run standard grammar analysis">
+          <span>
+            <Button
+              variant="contained"
+              startIcon={<PlayCircleOutlineIcon />}
+              onClick={onAnalyze}
+              disabled={isDisabled}
+            >
+              Analyze Grammar
+            </Button>
+          </span>
+        </Tooltip>
       </CardActions>
     </Card>
   );

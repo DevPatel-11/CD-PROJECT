@@ -4,30 +4,37 @@ from backend.first_follow import compute_first_sets, compute_follow_sets
 from backend.lr1_builder import build_lr1, build_action_goto_tables, detect_conflicts
 
 
-@pytest.mark.parametrize("grammar_text,expected_conflict_type", [
-    (
-        """
+@pytest.mark.parametrize(
+    "grammar_text,expected_conflict_type",
+    [
+        (
+            """
         S -> a S | b S | ε
-        """, []
-    ),
-    (
-        """
+        """,
+            [],
+        ),
+        (
+            """
         S -> a S | a
-        """, []
-    ),
-    (
-        """
+        """,
+            [],
+        ),
+        (
+            """
         S -> a S | S a | ε
-        """, ["shift/reduce"]
-    ),
-    (
-        """
+        """,
+            ["shift/reduce"],
+        ),
+        (
+            """
         S -> A a | B a
         A -> a
         B -> a | ε
-        """, []
-    ),
-])
+        """,
+            [],
+        ),
+    ],
+)
 def test_lr1_conflicts(grammar_text, expected_conflict_type):
     grammar = parse_grammar(grammar_text, None)
     first = compute_first_sets(grammar)

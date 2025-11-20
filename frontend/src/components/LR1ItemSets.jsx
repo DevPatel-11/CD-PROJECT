@@ -25,20 +25,23 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import SearchIcon from "@mui/icons-material/Search";
 
 function formatItem(item) {
-  return `${item.production} [dot=${item.dot}] [lookahead=${item.lookahead}]`;
+  const base = `${item.production} [dot=${item.dot}]`;
+  return item.lookahead && item.lookahead.toString().trim()
+    ? `${base} [lookahead=${item.lookahead}]`
+    : base;
 }
 
-function LR1ItemSets({ lr1ItemSets }) {
+function LR1ItemSets({ slrItemSets }) {
   const [copiedIdx, setCopiedIdx] = useState(-1);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   const filteredSets = useMemo(() => {
-    if (!query.trim()) return lr1ItemSets || [];
-    return (lr1ItemSets || []).filter(set =>
+    if (!query.trim()) return slrItemSets || [];
+    return (slrItemSets || []).filter(set =>
       set.items.some(item => formatItem(item).toLowerCase().includes(query.toLowerCase()))
     );
-  }, [lr1ItemSets, query]);
+  }, [slrItemSets, query]);
 
   const handleCopy = (itemText, idx) => {
     navigator.clipboard.writeText(itemText);
@@ -52,8 +55,7 @@ function LR1ItemSets({ lr1ItemSets }) {
   return (
     <Card elevation={3} sx={{ borderRadius: 3 }}>
       <CardHeader
-        title="LR(1) ITEM SETS"
-        
+        title="SLR ITEM SETS"
       />
       <CardContent>
         <Stack spacing={2}>
@@ -108,13 +110,15 @@ function LR1ItemSets({ lr1ItemSets }) {
                                 </React.Fragment>
                               ))}
                               {item.dot === parts.length - 2 && <strong style={{ color: "#5664d2" }}>•</strong>}
-                              <Chip
-                                label={`lookahead: ${item.lookahead}`}
-                                size="small"
-                                color="info"
-                                variant="outlined"
-                                sx={{ ml: 1 }}
-                              />
+                              {item.lookahead && item.lookahead.toString().trim() && (
+                                <Chip
+                                  label={`lookahead: ${item.lookahead}`}
+                                  size="small"
+                                  color="info"
+                                  variant="outlined"
+                                  sx={{ ml: 1 }}
+                                />
+                              )}
                             </Box>
                           }
                         />
@@ -134,7 +138,7 @@ function LR1ItemSets({ lr1ItemSets }) {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert severity="success" sx={{ width: "100%" }}>
-          LR(1) item copied!
+          SLR item copied!
         </Alert>
       </Snackbar>
     </Card>

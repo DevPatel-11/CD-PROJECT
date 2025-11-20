@@ -11,11 +11,11 @@ from backend.parser_core import parse_grammar
 from backend.first_follow import compute_first_sets, compute_follow_sets
 
 from backend.lr1_builder import (
-    build_lr1,
     detect_conflicts,
-    build_action_goto_tables,
     resolve_conflicts_default_left,
     simulate_parse,
+    build_lr1,
+    build_lr1_action_goto_tables,
 )
 
 
@@ -64,12 +64,14 @@ def analyze_grammar():
             "errors": [],
         }
 
-        # LR(1) & parsing tables
-        if req.options.build_lr1:
+        # LR(1) parsing tables
+        if getattr(req.options, "build_lr1", False):
             lr1_result = build_lr1(grammar, first_sets, follow_sets)
             response["lr1_item_sets"] = lr1_result["item_sets"]
 
-            action_table, goto_table = build_action_goto_tables(lr1_result, grammar)
+            action_table, goto_table = build_lr1_action_goto_tables(
+                lr1_result, grammar, follow_sets
+            )
             response["action_table"] = action_table
             response["goto_table"] = goto_table
 
@@ -78,13 +80,17 @@ def analyze_grammar():
             response["ambiguity"] = raw_conflicts
 
             # Resolve conflicts using default LEFT associativity
-            action_table, resolved_conflicts = resolve_conflicts_default_left(action_table)
+            action_table, resolved_conflicts = resolve_conflicts_default_left(
+                action_table
+            )
             response["action_table"] = action_table
             response["resolved_conflicts"] = resolved_conflicts
 
         # Ambiguity flag fix
         if req.options.detect_ambiguity and not response["ambiguity"]["has_conflict"]:
-            response["ambiguity"]["has_conflict"] = len(response["ambiguity"]["conflicts"]) > 0
+            response["ambiguity"]["has_conflict"] = (
+                len(response["ambiguity"]["conflicts"]) > 0
+            )
 
     except ValidationError as ve:
         return jsonify({"errors": [ve.errors()]}), 422
@@ -109,8 +115,11 @@ def simulate():
         first_sets = compute_first_sets(grammar)
         follow_sets = compute_follow_sets(grammar, first_sets)
 
+        # Build LR tables for simulation (LR only)
         lr1_result = build_lr1(grammar, first_sets, follow_sets)
-        action_table, goto_table = build_action_goto_tables(lr1_result, grammar)
+        action_table, goto_table = build_lr1_action_goto_tables(
+            lr1_result, grammar, follow_sets
+        )
 
         resp = simulate_parse(
             grammar,

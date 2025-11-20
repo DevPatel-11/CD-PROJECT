@@ -1,23 +1,28 @@
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 
+
 class AnalyzeOptions(BaseModel):
     detect_ambiguity: bool
     build_lr1: bool
+
 
 class GrammarAnalyzeRequest(BaseModel):
     grammar_text: str
     start_symbol: Optional[str]
     options: AnalyzeOptions
 
+
 class LR1Item(BaseModel):
     production: str
     dot: int
     lookahead: str
 
+
 class LR1ItemSet(BaseModel):
     id: int
     items: List[LR1Item]
+
 
 class ConflictInfo(BaseModel):
     state: int
@@ -25,9 +30,11 @@ class ConflictInfo(BaseModel):
     type: str
     details: str
 
+
 class AmbiguityInfo(BaseModel):
     has_conflict: bool
     conflicts: List[ConflictInfo]
+
 
 class GrammarAnalyzeResponse(BaseModel):
     first_sets: Dict[str, List[str]]
@@ -38,11 +45,13 @@ class GrammarAnalyzeResponse(BaseModel):
     ambiguity: AmbiguityInfo
     errors: List[str]
 
+
 class SimulateParseRequest(BaseModel):
     grammar_text: str
     input_tokens: List[str]
     start_symbol: Optional[str]
     max_steps: int
+
 
 class ParseStep(BaseModel):
     step: int
@@ -50,6 +59,7 @@ class ParseStep(BaseModel):
     input: List[str]
     action: str
     notes: str
+
 
 class SimulateParseResponse(BaseModel):
     steps: List[ParseStep]

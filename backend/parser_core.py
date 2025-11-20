@@ -32,8 +32,8 @@ def parse_grammar(grammar_text: str, start_symbol: Optional[str]) -> Grammar:
         for rhs in rules:
             rhs_symbols.update([sym for sym in rhs if sym != 'ε'])
     terminals = rhs_symbols - nonterminals
-    # Set start symbol
-    start = start_symbol if start_symbol else next(iter(nonterminals))
+    # Set start symbol (use first LHS in productions to preserve user order)
+    start = start_symbol if start_symbol else next(iter(productions))
     if start not in productions:
         raise GrammarParseError(f"Start symbol '{start}' not found in grammar")
     return Grammar(nonterminals, terminals, productions, start)

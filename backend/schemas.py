@@ -3,21 +3,21 @@ from pydantic import BaseModel, Field
 
 class AnalyzeOptions(BaseModel):
     detect_ambiguity: bool
-    build_lr1: bool
+    build_slr: bool
 
 class GrammarAnalyzeRequest(BaseModel):
     grammar_text: str
     start_symbol: Optional[str]
     options: AnalyzeOptions
 
-class LR1Item(BaseModel):
+class SLRItem(BaseModel):
     production: str
     dot: int
     lookahead: str
 
-class LR1ItemSet(BaseModel):
+class SLRItemSet(BaseModel):
     id: int
-    items: List[LR1Item]
+    items: List[SLRItem]
 
 class ConflictInfo(BaseModel):
     state: int
@@ -32,7 +32,7 @@ class AmbiguityInfo(BaseModel):
 class GrammarAnalyzeResponse(BaseModel):
     first_sets: Dict[str, List[str]]
     follow_sets: Dict[str, List[str]]
-    lr1_item_sets: List[LR1ItemSet]
+    slr_item_sets: List[SLRItemSet]
     action_table: Dict[str, Dict[str, str]]
     goto_table: Dict[str, Dict[str, int]]
     ambiguity: AmbiguityInfo

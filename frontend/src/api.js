@@ -9,13 +9,17 @@ export async function analyzeGrammar({ grammarText, startSymbol, options }) {
       start_symbol: startSymbol,
       options: {
         detect_ambiguity: !!options.detectAmbiguity,
-        build_slr: !!options.buildSLR
+        build_lr1: !!options.buildSLR
       }
     });
     return resp.data;
   } catch (e) {
     if (e.response && e.response.data && e.response.data.errors) {
-      throw new Error((e.response.data.errors || []).join("; "));
+      const errors = e.response.data.errors || [];
+      const errorMessages = errors.map(err => 
+        typeof err === "string" ? err : JSON.stringify(err)
+      );
+      throw new Error(errorMessages.join("; "));
     }
     throw e;
   }
@@ -32,7 +36,11 @@ export async function simulateParse({ grammarText, inputTokens, startSymbol, max
     return resp.data;
   } catch (e) {
     if (e.response && e.response.data && e.response.data.errors) {
-      throw new Error((e.response.data.errors || []).join("; "));
+      const errors = e.response.data.errors || [];
+      const errorMessages = errors.map(err => 
+        typeof err === "string" ? err : JSON.stringify(err)
+      );
+      throw new Error(errorMessages.join("; "));
     }
     throw e;
   }

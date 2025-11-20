@@ -93,7 +93,12 @@ def analyze_grammar():
             )
 
     except ValidationError as ve:
-        return jsonify({"errors": [ve.errors()]}), 422
+        error_messages = []
+        for err in ve.errors():
+            loc = " -> ".join(str(x) for x in err.get("loc", []))
+            msg = err.get("msg", "Validation error")
+            error_messages.append(f"{loc}: {msg}" if loc else msg)
+        return jsonify({"errors": error_messages}), 422
     except GrammarParseError as ge:
         return jsonify({"errors": [str(ge)]}), 400
     except Exception as e:
@@ -131,7 +136,12 @@ def simulate():
         )
 
     except ValidationError as ve:
-        return jsonify({"errors": [ve.errors()]}), 422
+        error_messages = []
+        for err in ve.errors():
+            loc = " -> ".join(str(x) for x in err.get("loc", []))
+            msg = err.get("msg", "Validation error")
+            error_messages.append(f"{loc}: {msg}" if loc else msg)
+        return jsonify({"errors": error_messages}), 422
     except GrammarParseError as ge:
         return jsonify({"errors": [str(ge)]}), 400
     except Exception as e:

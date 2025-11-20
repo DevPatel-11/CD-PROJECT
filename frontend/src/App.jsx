@@ -156,7 +156,7 @@ function App() {
               <>
                 <Stack spacing={3}>
                   <FirstFollowTable first={analyzeResult.first_sets} follow={analyzeResult.follow_sets} />
-                  <LR1ItemSets slrItemSets={analyzeResult.slr_item_sets} />
+                  <LR1ItemSets slrItemSets={analyzeResult.lr1_item_sets} />
                   <ActionGotoTable
                     actionTable={analyzeResult.action_table}
                     gotoTable={analyzeResult.goto_table}
@@ -170,7 +170,7 @@ function App() {
                   maxSteps={maxSteps}
                   setMaxSteps={setMaxSteps}
                   parseResult={parseResult}
-                  disabled={!analyzeResult?.slr_item_sets?.length}
+                  disabled={!analyzeResult?.lr1_item_sets?.length}
                   isSimulating={isSimulating}
                 />
               </>

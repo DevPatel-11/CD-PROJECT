@@ -54,7 +54,7 @@ function App() {
 
   const [grammarText, setGrammarText] = useState("");
   const [startSymbol, setStartSymbol] = useState("");
-  const [options, setOptions] = useState({ detectAmbiguity: true, buildLR1: true });
+  const [options, setOptions] = useState({ detectAmbiguity: true, buildSLR: true });
   const [analyzeResult, setAnalyzeResult] = useState(null);
   const [inputTokens, setInputTokens] = useState("");
   const [parseResult, setParseResult] = useState(null);
@@ -70,7 +70,7 @@ function App() {
     }
 
     const nextOptions = { ...options };
-    if (mode === "lr1") nextOptions.buildLR1 = true;
+    if (mode === "slr") nextOptions.buildSLR = true;
     if (mode === "resolve") nextOptions.detectAmbiguity = true;
     setOptions(nextOptions);
 
@@ -84,7 +84,7 @@ function App() {
         startSymbol: startSymbol || null,
         options: {
           detectAmbiguity: nextOptions.detectAmbiguity,
-          buildLR1: nextOptions.buildLR1
+          buildSLR: nextOptions.buildSLR
         }
       });
       setAnalyzeResult(res);
@@ -131,10 +131,10 @@ function App() {
           <Stack spacing={4}>
             <Box textAlign="center">
               <Typography variant="h4" gutterBottom>
-                GRAMMAR AMBIGUITY CHECKER FOR LR(1)
+                GRAMMAR AMBIGUITY CHECKER FOR SLR
               </Typography>
               <Typography color="text.secondary">
-                Analyze grammar, construct parsing tables, resolves ambiguity and simulate LR(1) parses in a single workspace.
+                Analyze grammar, construct parsing tables, resolve ambiguity and simulate SLR parses in a single workspace.
               </Typography>
             </Box>
 
@@ -147,8 +147,6 @@ function App() {
                 options={options}
                 setOptions={setOptions}
                 onAnalyze={() => runAnalyze("default")}
-                onGenerateLR1={() => runAnalyze("lr1")}
-                onResolveAmbiguity={() => runAnalyze("resolve")}
                 isAnalyzing={isAnalyzing}
               />
               {analyzeResult?.ambiguity && <AmbiguityPanel ambiguity={analyzeResult.ambiguity} />}
@@ -158,7 +156,7 @@ function App() {
               <>
                 <Stack spacing={3}>
                   <FirstFollowTable first={analyzeResult.first_sets} follow={analyzeResult.follow_sets} />
-                  <LR1ItemSets lr1ItemSets={analyzeResult.lr1_item_sets} />
+                  <LR1ItemSets slrItemSets={analyzeResult.slr_item_sets} />
                   <ActionGotoTable
                     actionTable={analyzeResult.action_table}
                     gotoTable={analyzeResult.goto_table}
@@ -172,7 +170,7 @@ function App() {
                   maxSteps={maxSteps}
                   setMaxSteps={setMaxSteps}
                   parseResult={parseResult}
-                  disabled={!analyzeResult?.lr1_item_sets?.length}
+                  disabled={!analyzeResult?.slr_item_sets?.length}
                   isSimulating={isSimulating}
                 />
               </>

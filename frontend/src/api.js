@@ -9,7 +9,7 @@ export async function analyzeGrammar({ grammarText, startSymbol, options }) {
       start_symbol: startSymbol,
       options: {
         detect_ambiguity: !!options.detectAmbiguity,
-        build_lr1: !!options.buildLR1
+        build_slr: !!options.buildSLR
       }
     });
     return resp.data;
